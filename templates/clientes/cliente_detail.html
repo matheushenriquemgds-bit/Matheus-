@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load escritorio %}
+{% block titulo %}{{ object.nome }}{% endblock %}
+{% block conteudo %}
+<div class="d-flex flex-wrap justify-content-between align-items-start mb-3 gap-2">
+  <div>
+    <a href="{% url 'clientes:lista' %}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> Clientes</a>
+    <h1 class="h4 mb-0">{{ object.nome }} {% if not object.ativo %}<span class="badge text-bg-secondary fs-6">inativo</span>{% endif %}</h1>
+    <span class="text-muted">{{ object.get_tipo_display }}{% if object.cpf_cnpj %} · {{ object.documento_formatado }}{% endif %}</span>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary btn-sm" href="{% url 'clientes:editar' object.pk %}"><i class="bi bi-pencil me-1"></i>Editar</a>
+    <a class="btn btn-outline-danger btn-sm" href="{% url 'clientes:excluir' object.pk %}"><i class="bi bi-trash"></i></a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card"><div class="card-body">
+      <h2 class="h6 text-muted text-uppercase small">Dados</h2>
+      <dl class="mb-0 small">
+        {% if object.email %}<dt>E-mail</dt><dd><a href="mailto:{{ object.email }}">{{ object.email }}</a></dd>{% endif %}
+        {% if object.celular %}<dt>Celular</dt><dd>{{ object.celular }}</dd>{% endif %}
+        {% if object.telefone %}<dt>Telefone</dt><dd>{{ object.telefone }}</dd>{% endif %}
+        {% if object.endereco %}<dt>Endereço</dt><dd>{{ object.endereco }}</dd>{% endif %}
+        {% if object.rg %}<dt>RG / IE</dt><dd>{{ object.rg }}</dd>{% endif %}
+        {% if object.data_nascimento %}<dt>Nascimento</dt><dd>{{ object.data_nascimento|date:"d/m/Y" }}</dd>{% endif %}
+        {% if object.estado_civil %}<dt>Estado civil</dt><dd>{{ object.get_estado_civil_display }}</dd>{% endif %}
+        {% if object.profissao %}<dt>Profissão</dt><dd>{{ object.profissao }}</dd>{% endif %}
+        {% if object.responsavel %}<dt>Responsável</dt><dd>{{ object.responsavel.get_full_name|default:object.responsavel.username }}</dd>{% endif %}
+        <dt>Cadastrado em</dt><dd>{{ object.criado_em|date:"d/m/Y" }}</dd>
+      </dl>
+      {% if object.observacoes %}<hr><div class="small" style="white-space: pre-wrap">{{ object.observacoes }}</div>{% endif %}
+    </div></div>
+  </div>
+  <div class="col-lg-8 d-flex flex-column gap-3">
+    <div class="card">
+      <div class="card-header bg-white d-flex justify-content-between"><strong>Processos</strong>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'processos:criar' %}?cliente={{ object.pk }}"><i class="bi bi-plus"></i> Processo</a></div>
+      <ul class="list-group list-group-flush">
+        {% for p in processos %}
+        <a class="list-group-item list-group-item-action" href="{{ p.get_absolute_url }}">
+          <div class="d-flex justify-content-between"><strong>{{ p.numero }}</strong><span class="badge text-bg-light">{{ p.get_situacao_display }}</span></div>
+          <div class="small text-muted">{{ p.titulo|default:p.classe }}{% if p.parte_contraria %} · x {{ p.parte_contraria }}{% endif %} · {{ p.tribunal }}</div>
+        </a>
+        {% empty %}<li class="list-group-item text-muted small">Nenhum processo.</li>{% endfor %}
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header bg-white d-flex justify-content-between"><strong>Compromissos pendentes</strong>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'agenda:criar' %}?cliente={{ object.pk }}&tipo=reuniao"><i class="bi bi-plus"></i> Agendar</a></div>
+      <ul class="list-group list-group-flush">
+        {% for c in compromissos %}{% include "agenda/_item.html" %}{% empty %}<li class="list-group-item text-muted small">Nenhum compromisso.</li>{% endfor %}
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header bg-white d-flex justify-content-between"><strong>Financeiro</strong>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'financeiro:criar' %}?cliente={{ object.pk }}&voltar={{ request.path|urlencode }}"><i class="bi bi-plus"></i> Lançamento</a></div>
+      {% include "financeiro/_tabela.html" with lancamentos=lancamentos %}
+    </div>
+  </div>
+</div>
+{% endblock %}

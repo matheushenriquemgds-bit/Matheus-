@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block titulo %}Publicações{% endblock %}
+{% block conteudo %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h1 class="h4 mb-0">Publicações</h1>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary btn-sm" href="{% url 'publicacoes:oabs' %}"><i class="bi bi-person-badge me-1"></i>OABs monitoradas</a>
+    <a class="btn btn-outline-secondary btn-sm" href="{% url 'publicacoes:criar' %}"><i class="bi bi-plus me-1"></i>Cadastrar manualmente</a>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#buscar"><i class="bi bi-cloud-download me-1"></i>Buscar agora</button>
+  </div>
+</div>
+
+<div class="collapse mb-3" id="buscar"><div class="card"><div class="card-body">
+  <form method="post" action="{% url 'publicacoes:buscar' %}" class="row g-2 align-items-end">{% csrf_token %}
+    <div class="col-auto"><label class="form-label small">De</label>{{ busca_form.inicio }}</div>
+    <div class="col-auto"><label class="form-label small">Até</label>{{ busca_form.fim }}</div>
+    <div class="col-auto"><button class="btn btn-primary">Buscar no DJEN</button></div>
+    <div class="col-12 small text-muted">Consulta a API pública do CNJ (Comunica PJe) para todas as OABs ativas. A busca automática roda pelo comando <code>buscar_publicacoes</code>.</div>
+  </form>
+</div></div></div>
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link {% if status == 'nao_lidas' %}active{% endif %}" href="?status=nao_lidas">Não lidas</a></li>
+  <li class="nav-item"><a class="nav-link {% if status == 'lidas' %}active{% endif %}" href="?status=lidas">Lidas</a></li>
+  <li class="nav-item"><a class="nav-link {% if status == 'todas' %}active{% endif %}" href="?status=todas">Todas</a></li>
+</ul>
+
+<form class="row g-2 mb-3">
+  <input type="hidden" name="status" value="{{ status }}">
+  <div class="col-md-4"><input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="Buscar no texto, número, partes, cliente…"></div>
+  <div class="col-md-2"><select name="tribunal" class="form-select" onchange="this.form.submit()"><option value="">Todos os tribunais</option>
+    {% for t in tribunais %}<option {% if request.GET.tribunal == t %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><select name="oab" class="form-select" onchange="this.form.submit()"><option value="">Todas as OABs</option>
+    {% for o in oabs %}<option value="{{ o.pk }}" {% if request.GET.oab == o.pk|stringformat:"s" %}selected{% endif %}>{{ o.advogado }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><select name="vinculo" class="form-select" onchange="this.form.submit()">
+    <option value="">Com e sem processo</option><option value="sem" {% if request.GET.vinculo == 'sem' %}selected{% endif %}>Sem processo vinculado</option></select></div>
+  <div class="col-md-2"><button class="btn btn-outline-secondary w-100"><i class="bi bi-search"></i> Filtrar</button></div>
+</form>
+
+<form method="post" action="{% url 'publicacoes:marcar_varias' %}">{% csrf_token %}
+<input type="hidden" name="voltar" value="{{ request.get_full_path }}">
+<div class="card">
+  {% if status != 'lidas' and object_list %}
+  <div class="card-header bg-white d-flex align-items-center gap-3">
+    <input class="form-check-input" type="checkbox" id="todos" onclick="document.querySelectorAll('.sel').forEach(c => c.checked = this.checked)">
+    <label for="todos" class="small">Selecionar todas</label>
+    <button class="btn btn-sm btn-outline-success ms-auto"><i class="bi bi-check2-all me-1"></i>Marcar selecionadas como lidas</button>
+  </div>
+  {% endif %}
+  <ul class="list-group list-group-flush">
+  {% for p in object_list %}
+    <li class="list-group-item d-flex gap-3 {% if not p.lida %}bg-body{% else %}bg-light{% endif %}">
+      {% if not p.lida %}<input class="form-check-input sel mt-1" type="checkbox" name="ids" value="{{ p.pk }}">{% else %}<i class="bi bi-check2 text-success"></i>{% endif %}
+      <a href="{{ p.get_absolute_url }}" class="text-decoration-none text-body flex-grow-1 min-w-0">
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+          <span><strong class="{% if not p.lida %}text-primary{% endif %}">{{ p.numero_processo|default:"Sem número" }}</strong>
+            {% if p.tipo %}<span class="badge text-bg-light border">{{ p.tipo }}</span>{% endif %}
+            {% if p.processo %}<span class="small text-muted">· {{ p.processo.cliente }}</span>{% else %}<span class="badge text-bg-warning">sem processo</span>{% endif %}</span>
+          <span class="small text-muted text-nowrap">{{ p.data_disponibilizacao|date:"d/m/Y" }} · {{ p.tribunal }}</span>
+        </div>
+        <div class="small text-muted">{{ p.orgao }}</div>
+        <div class="small text-truncate">{{ p.texto|truncatechars:220 }}</div>
+      </a>
+    </li>
+  {% empty %}
+    <li class="list-group-item text-center text-muted py-4">Nenhuma publicação encontrada.</li>
+  {% endfor %}
+  </ul>
+</div>
+</form>
+{% include "core/_paginacao.html" %}
+{% endblock %}

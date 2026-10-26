@@ -1,0 +1,26 @@
+body { background: #f4f6f9; }
+.sidebar { width: 250px; min-height: 100vh; flex-shrink: 0; }
+@media (min-width: 992px) { .sidebar > div { position: sticky; top: 0; max-height: 100vh; overflow-y: auto; } }
+.sidebar .nav-link { color: rgba(255,255,255,.75); display: flex; align-items: center; gap: .6rem; }
+.sidebar .nav-link:hover { color: #fff; background: rgba(255,255,255,.08); }
+.sidebar .nav-link.active { background: #0d6efd; color: #fff; }
+.conteudo { min-width: 0; }
+.card { border: 0; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.stat .valor { font-size: 1.75rem; font-weight: 600; line-height: 1.1; }
+.stat i { font-size: 2rem; opacity: .25; }
+.table > :not(caption) > * > * { vertical-align: middle; }
+.texto-publicacao { white-space: pre-wrap; font-family: Georgia, serif; line-height: 1.6; }
+.situacao-atrasado { border-left: 4px solid var(--bs-danger) !important; }
+.situacao-hoje { border-left: 4px solid var(--bs-warning) !important; }
+.situacao-futuro { border-left: 4px solid var(--bs-primary) !important; }
+.situacao-concluido { border-left: 4px solid var(--bs-success) !important; opacity: .7; }
+.calendario td { width: 14.28%; height: 110px; vertical-align: top !important; font-size: .8rem; }
+.calendario td.fora { background: #f8f9fa; color: #adb5bd; }
+.calendario td.hoje { background: #fff8e1; }
+.evento { display: block; padding: 1px 4px; margin-top: 2px; border-radius: 3px; color: #fff;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-decoration: none; }
+.legenda .evento { display: inline-block; margin: 0; }
+.tipo-prazo { background: #dc3545; } .tipo-audiencia { background: #6f42c1; }
+.tipo-tarefa { background: #0d6efd; } .tipo-reuniao { background: #198754; }
+.evento.feito { opacity: .45; text-decoration: line-through; }
+.login-box { max-width: 380px; margin: 10vh auto; }

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load escritorio %}
+{% block titulo %}Financeiro{% endblock %}
+{% block conteudo %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h1 class="h4 mb-0">Financeiro</h1>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-danger" href="{% url 'financeiro:criar' %}?tipo=despesa"><i class="bi bi-dash-lg me-1"></i>Despesa</a>
+    <a class="btn btn-success" href="{% url 'financeiro:criar' %}?tipo=receita"><i class="bi bi-plus-lg me-1"></i>Receita</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-xl-3"><div class="card stat"><div class="card-body"><div class="small text-muted">Receitas (filtro)</div><div class="valor fs-4 text-success">{{ receitas|reais }}</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat"><div class="card-body"><div class="small text-muted">Despesas (filtro)</div><div class="valor fs-4 text-danger">{{ despesas|reais }}</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat"><div class="card-body"><div class="small text-muted">Saldo (filtro)</div><div class="valor fs-4">{{ saldo|reais }}</div></div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat"><div class="card-body"><div class="small text-muted">Recebido neste mês</div><div class="valor fs-4 text-primary">{{ recebido_mes|reais }}</div></div></div></div>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link {% if status == 'abertos' %}active{% endif %}" href="?status=abertos">Em aberto</a></li>
+  <li class="nav-item"><a class="nav-link {% if status == 'vencidos' %}active{% endif %}" href="?status=vencidos">Vencidos</a></li>
+  <li class="nav-item"><a class="nav-link {% if status == 'pagos' %}active{% endif %}" href="?status=pagos">Pagos</a></li>
+  <li class="nav-item"><a class="nav-link {% if status == 'todos' %}active{% endif %}" href="?status=todos">Todos</a></li>
+</ul>
+<form class="row g-2 mb-3">
+  <input type="hidden" name="status" value="{{ status }}">
+  <div class="col-md-3"><input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="Descrição, cliente, processo…"></div>
+  <div class="col-md-2"><select name="tipo" class="form-select" onchange="this.form.submit()"><option value="">Receitas e despesas</option>
+    <option value="receita" {% if request.GET.tipo == 'receita' %}selected{% endif %}>Receitas</option>
+    <option value="despesa" {% if request.GET.tipo == 'despesa' %}selected{% endif %}>Despesas</option></select></div>
+  <div class="col-md-2"><select name="categoria" class="form-select" onchange="this.form.submit()"><option value="">Todas as categorias</option>
+    {% for v, n in categorias %}<option value="{{ v }}" {% if request.GET.categoria == v %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
+  <div class="col-md-2"><input type="date" class="form-control" name="de" value="{{ request.GET.de }}" title="Vencimento a partir de"></div>
+  <div class="col-md-2"><input type="date" class="form-control" name="ate" value="{{ request.GET.ate }}" title="Vencimento até"></div>
+  <div class="col-md-1"><button class="btn btn-outline-secondary w-100"><i class="bi bi-search"></i></button></div>
+</form>
+
+<div class="card"><div class="table-responsive">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Vencimento</th><th>Descrição</th><th>Cliente / processo</th><th>Categoria</th><th class="text-end">Valor</th><th class="text-center">Situação</th></tr></thead>
+  <tbody>
+  {% for l in object_list %}
+    <tr>
+      <td class="{% if l.vencido %}text-danger fw-semibold{% endif %}">{{ l.vencimento|date:"d/m/Y" }}</td>
+      <td><a href="{% url 'financeiro:editar' l.pk %}?voltar={{ request.get_full_path|urlencode }}" class="text-decoration-none">{{ l.descricao }}</a>
+        {% if l.parcela %}<span class="text-muted small">({{ l.parcela }})</span>{% endif %}</td>
+      <td class="small">{% if l.cliente %}<a href="{{ l.cliente.get_absolute_url }}">{{ l.cliente }}</a>{% endif %}
+        {% if l.processo %}<div><a class="text-muted" href="{{ l.processo.get_absolute_url }}">{{ l.processo }}</a></div>{% endif %}</td>
+      <td class="small">{{ l.get_categoria_display }}</td>
+      <td class="text-end text-nowrap {% if l.tipo == 'despesa' %}text-danger{% else %}text-success{% endif %}">{% if l.tipo == 'despesa' %}-{% endif %}{{ l.valor|reais }}</td>
+      <td class="text-center">
+        <form method="post" action="{% url 'financeiro:alternar_pago' l.pk %}">{% csrf_token %}
+          <input type="hidden" name="voltar" value="{{ request.get_full_path }}">
+          {% if l.pago %}<button class="btn btn-sm btn-success py-0" title="Desfazer">Pago {{ l.data_pagamento|date:"d/m" }}</button>
+          {% else %}<button class="btn btn-sm {% if l.vencido %}btn-outline-danger{% else %}btn-outline-secondary{% endif %} py-0">Marcar pago</button>{% endif %}
+        </form>
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="6" class="text-center text-muted py-4">Nenhum lançamento.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div></div>
+{% include "core/_paginacao.html" %}
+{% endblock %}

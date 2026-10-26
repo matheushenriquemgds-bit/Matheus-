@@ -1,0 +1,58 @@
+{% load static %}<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Escritório{% endblock %} · Gestão Jurídica</title>
+  <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/app.css' %}" rel="stylesheet">
+</head>
+<body>
+{% if user.is_authenticated %}
+<nav class="navbar navbar-dark bg-dark d-lg-none px-3">
+  <button class="btn btn-outline-light btn-sm" data-bs-toggle="offcanvas" data-bs-target="#menu"><i class="bi bi-list"></i></button>
+  <span class="navbar-brand mb-0">Gestão Jurídica</span>
+</nav>
+<div class="d-flex">
+  <aside class="offcanvas-lg offcanvas-start bg-dark text-white sidebar" id="menu" tabindex="-1">
+    <div class="p-3">
+      <a href="{% url 'dashboard' %}" class="d-block text-white text-decoration-none fs-5 fw-semibold mb-4">
+        <i class="bi bi-bank2 me-2"></i>Gestão Jurídica
+      </a>
+      {% with p=request.path %}
+      <ul class="nav nav-pills flex-column gap-1">
+        <li><a class="nav-link {% if p == '/' %}active{% endif %}" href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i>Painel</a></li>
+        <li><a class="nav-link {% if '/publicacoes/' in p %}active{% endif %}" href="{% url 'publicacoes:lista' %}"><i class="bi bi-newspaper"></i>Publicações
+          {% if menu_nao_lidas %}<span class="badge text-bg-danger ms-auto">{{ menu_nao_lidas }}</span>{% endif %}</a></li>
+        <li><a class="nav-link {% if '/agenda/' in p %}active{% endif %}" href="{% url 'agenda:lista' %}"><i class="bi bi-calendar-check"></i>Prazos e agenda
+          {% if menu_atrasados %}<span class="badge text-bg-warning ms-auto" title="Vencem hoje ou atrasados">{{ menu_atrasados }}</span>{% endif %}</a></li>
+        <li><a class="nav-link {% if '/processos/' in p %}active{% endif %}" href="{% url 'processos:lista' %}"><i class="bi bi-folder2-open"></i>Processos</a></li>
+        <li><a class="nav-link {% if '/clientes/' in p %}active{% endif %}" href="{% url 'clientes:lista' %}"><i class="bi bi-people"></i>Clientes</a></li>
+        <li><a class="nav-link {% if '/financeiro/' in p %}active{% endif %}" href="{% url 'financeiro:lista' %}"><i class="bi bi-cash-coin"></i>Financeiro</a></li>
+      </ul>
+      {% endwith %}
+      <hr class="border-secondary">
+      <div class="small text-white-50 mb-2"><i class="bi bi-person-circle me-1"></i>{{ user.get_full_name|default:user.username }}</div>
+      {% if user.is_staff %}<a class="btn btn-sm btn-outline-light w-100 mb-2" href="{% url 'admin:index' %}"><i class="bi bi-gear me-1"></i>Administração</a>{% endif %}
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+        <button class="btn btn-sm btn-outline-light w-100 opacity-75"><i class="bi bi-box-arrow-right me-1"></i>Sair</button>
+      </form>
+    </div>
+  </aside>
+  <main class="flex-grow-1 p-3 p-lg-4 conteudo">
+    {% for m in messages %}
+    <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} alert-dismissible fade show" role="alert">
+      {{ m }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% block conteudo %}{% endblock %}
+  </main>
+</div>
+{% else %}
+  {% block publico %}{% endblock %}
+{% endif %}
+<script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

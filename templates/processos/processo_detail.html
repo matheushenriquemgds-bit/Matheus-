@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% load escritorio %}
+{% block titulo %}{{ object.numero }}{% endblock %}
+{% block conteudo %}
+<div class="d-flex flex-wrap justify-content-between align-items-start mb-3 gap-2">
+  <div>
+    <a href="{% url 'processos:lista' %}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> Processos</a>
+    <h1 class="h4 mb-0">{{ object.numero }}
+      <span class="badge fs-6 {% if object.situacao == 'ativo' %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ object.get_situacao_display }}</span></h1>
+    <span class="text-muted">{{ object.titulo|default:object.classe }}</span>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-primary btn-sm" href="{% url 'agenda:criar' %}?processo={{ object.pk }}&voltar={{ request.path|urlencode }}"><i class="bi bi-calendar-plus me-1"></i>Prazo / audiência</a>
+    <a class="btn btn-outline-primary btn-sm" href="{% url 'processos:editar' object.pk %}"><i class="bi bi-pencil me-1"></i>Editar</a>
+    <a class="btn btn-outline-danger btn-sm" href="{% url 'processos:excluir' object.pk %}"><i class="bi bi-trash"></i></a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4 d-flex flex-column gap-3">
+    <div class="card"><div class="card-body">
+      <dl class="mb-0 small">
+        <dt>Cliente</dt><dd><a href="{{ object.cliente.get_absolute_url }}">{{ object.cliente }}</a> <span class="text-muted">({{ object.get_polo_cliente_display }})</span></dd>
+        {% if object.parte_contraria %}<dt>Parte contrária</dt><dd>{{ object.parte_contraria }}</dd>{% endif %}
+        <dt>Área</dt><dd>{{ object.get_area_display }}</dd>
+        {% if object.tribunal or object.orgao %}<dt>Tribunal / órgão</dt><dd>{{ object.tribunal }} {{ object.orgao }}</dd>{% endif %}
+        {% if object.comarca %}<dt>Comarca</dt><dd>{{ object.comarca }}</dd>{% endif %}
+        {% if object.instancia %}<dt>Instância</dt><dd>{{ object.instancia }}</dd>{% endif %}
+        {% if object.classe %}<dt>Classe</dt><dd>{{ object.classe }}</dd>{% endif %}
+        {% if object.assunto %}<dt>Assunto</dt><dd>{{ object.assunto }}</dd>{% endif %}
+        {% if object.valor_causa %}<dt>Valor da causa</dt><dd>{{ object.valor_causa|reais }}</dd>{% endif %}
+        {% if object.data_distribuicao %}<dt>Distribuição</dt><dd>{{ object.data_distribuicao|date:"d/m/Y" }}</dd>{% endif %}
+        {% if object.responsavel %}<dt>Responsável</dt><dd>{{ object.responsavel.get_full_name|default:object.responsavel.username }}</dd>{% endif %}
+      </dl>
+      {% if object.observacoes %}<hr><div class="small" style="white-space: pre-wrap">{{ object.observacoes }}</div>{% endif %}
+    </div></div>
+
+    <div class="card">
+      <div class="card-header bg-white"><strong>Prazos e compromissos</strong></div>
+      <ul class="list-group list-group-flush">
+        {% for c in compromissos %}{% include "agenda/_item.html" %}{% empty %}<li class="list-group-item text-muted small">Nenhum.</li>{% endfor %}
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header bg-white"><strong><i class="bi bi-clock-history me-1"></i>Andamentos</strong></div>
+      <div class="card-body border-bottom">
+        <form method="post" action="{% url 'processos:andamento_criar' object.pk %}" class="row g-2">{% csrf_token %}
+          <div class="col-md-3">{{ andamento_form.data }}</div>
+          <div class="col-md-7">{{ andamento_form.descricao }}</div>
+          <div class="col-md-2"><button class="btn btn-outline-primary w-100">Registrar</button></div>
+        </form>
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for a in andamentos %}
+        <li class="list-group-item">
+          <div class="d-flex justify-content-between">
+            <span class="small fw-semibold">{{ a.data|date:"d/m/Y" }}
+              {% if a.origem == 'publicacao' %}<a class="badge text-bg-info text-decoration-none" href="{{ a.publicacao.get_absolute_url }}">publicação</a>{% endif %}
+              {% if a.autor %}<span class="text-muted fw-normal">· {{ a.autor.get_full_name|default:a.autor.username }}</span>{% endif %}</span>
+            <form method="post" action="{% url 'processos:andamento_excluir' a.pk %}" onsubmit="return confirm('Excluir este andamento?')">{% csrf_token %}
+              <button class="btn btn-link btn-sm text-danger p-0"><i class="bi bi-x-lg"></i></button></form>
+          </div>
+          <div class="small" style="white-space: pre-wrap">{{ a.descricao|truncatechars:600 }}</div>
+        </li>
+        {% empty %}<li class="list-group-item text-muted small">Nenhum andamento registrado.</li>{% endfor %}
+      </ul>
+    </div>
+    <div class="card mt-3">
+      <div class="card-header bg-white d-flex justify-content-between"><strong>Financeiro</strong>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'financeiro:criar' %}?processo={{ object.pk }}&cliente={{ object.cliente_id }}&voltar={{ request.path|urlencode }}"><i class="bi bi-plus"></i></a></div>
+      {% include "financeiro/_tabela.html" with lancamentos=lancamentos %}
+    </div>
+  </div>
+</div>
+{% endblock %}

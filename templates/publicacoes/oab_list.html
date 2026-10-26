@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block titulo %}OABs monitoradas{% endblock %}
+{% block conteudo %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <a href="{% url 'publicacoes:lista' %}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> Publicações</a>
+    <h1 class="h4 mb-0">OABs monitoradas</h1>
+  </div>
+  <a class="btn btn-primary" href="{% url 'publicacoes:oab_criar' %}"><i class="bi bi-plus-lg me-1"></i>Adicionar OAB</a>
+</div>
+<p class="text-muted small">As publicações de cada OAB ativa são buscadas no Diário de Justiça Eletrônico Nacional (DJEN), pela API pública Comunica PJe do CNJ.</p>
+<div class="card"><div class="table-responsive">
+<table class="table table-hover mb-0">
+  <thead class="table-light"><tr><th>Advogado</th><th>OAB</th><th>Buscado até</th><th>Publicações</th><th></th></tr></thead>
+  <tbody>
+  {% for o in object_list %}
+  <tr>
+    <td>{{ o.advogado }} {% if not o.ativa %}<span class="badge text-bg-secondary">inativa</span>{% endif %}</td>
+    <td>{{ o.uf }} {{ o.numero }}</td>
+    <td>{{ o.ultima_busca|date:"d/m/Y"|default:"nunca" }}</td>
+    <td><a href="{% url 'publicacoes:lista' %}?status=todas&oab={{ o.pk }}">{{ o.publicacoes.count }}</a></td>
+    <td class="text-end">
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'publicacoes:oab_editar' o.pk %}"><i class="bi bi-pencil"></i></a>
+      <a class="btn btn-sm btn-outline-danger" href="{% url 'publicacoes:oab_excluir' o.pk %}"><i class="bi bi-trash"></i></a>
+    </td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="5" class="text-center text-muted py-4">Nenhuma OAB cadastrada ainda.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div></div>
+{% endblock %}

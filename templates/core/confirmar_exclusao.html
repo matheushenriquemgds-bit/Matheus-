@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block titulo %}Excluir{% endblock %}
+{% block conteudo %}
+<div class="card" style="max-width: 560px"><div class="card-body">
+  <h1 class="h5"><i class="bi bi-exclamation-triangle text-danger me-2"></i>Excluir {{ nome_modelo }}?</h1>
+  <p class="mb-4">“<strong>{{ object }}</strong>” será excluído(a) definitivamente.</p>
+  <form method="post">{% csrf_token %}
+    <button class="btn btn-danger">Excluir</button>
+    <a class="btn btn-outline-secondary" href="javascript:history.back()">Cancelar</a>
+  </form>
+</div></div>
+{% endblock %}

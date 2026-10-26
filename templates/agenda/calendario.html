@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block titulo %}Calendário{% endblock %}
+{% block conteudo %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <div class="d-flex align-items-center gap-2">
+    <a class="btn btn-outline-secondary btn-sm" href="?ano={{ anterior.0 }}&mes={{ anterior.1 }}"><i class="bi bi-chevron-left"></i></a>
+    <h1 class="h4 mb-0">{{ mes_atual|date:"F \d\e Y" }}</h1>
+    <a class="btn btn-outline-secondary btn-sm" href="?ano={{ proximo.0 }}&mes={{ proximo.1 }}"><i class="bi bi-chevron-right"></i></a>
+    <a class="btn btn-link btn-sm" href="?">Hoje</a>
+  </div>
+  <div class="d-flex gap-2 small align-items-center legenda">
+    <span class="evento tipo-prazo">Prazo</span><span class="evento tipo-audiencia">Audiência</span>
+    <span class="evento tipo-tarefa">Tarefa</span><span class="evento tipo-reuniao">Reunião</span>
+    <a class="btn btn-outline-secondary btn-sm ms-2" href="{% url 'agenda:lista' %}"><i class="bi bi-list-ul"></i> Lista</a>
+  </div>
+</div>
+<div class="card"><div class="table-responsive">
+<table class="table table-bordered calendario mb-0">
+  <thead class="table-light text-center small"><tr><th>Dom</th><th>Seg</th><th>Ter</th><th>Qua</th><th>Qui</th><th>Sex</th><th>Sáb</th></tr></thead>
+  <tbody>
+  {% for semana in semanas %}
+    <tr>
+    {% for dia, eventos, do_mes in semana %}
+      <td class="{% if not do_mes %}fora{% endif %} {% if dia == hoje %}hoje{% endif %}">
+        <div class="d-flex justify-content-between">
+          <span class="fw-semibold">{{ dia.day }}</span>
+          <a class="text-muted text-decoration-none" title="Novo compromisso" href="{% url 'agenda:criar' %}?data={{ dia|date:'Y-m-d' }}&voltar={{ request.get_full_path|urlencode }}">+</a>
+        </div>
+        {% for c in eventos %}
+          <a class="evento tipo-{{ c.tipo }} {% if c.concluido %}feito{% endif %}" title="{{ c.titulo }}{% if c.processo %} — {{ c.processo }}{% endif %}"
+             href="{% url 'agenda:editar' c.pk %}?voltar={{ request.get_full_path|urlencode }}">{% if c.hora %}{{ c.hora|time:"H:i" }} {% endif %}{{ c.titulo }}</a>
+        {% endfor %}
+      </td>
+    {% endfor %}
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div></div>
+{% endblock %}

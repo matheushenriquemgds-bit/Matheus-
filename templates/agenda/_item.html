@@ -1,0 +1,22 @@
+<li class="list-group-item situacao-{{ c.situacao }} d-flex align-items-center gap-2">
+  <form method="post" action="{% url 'agenda:concluir' c.pk %}">{% csrf_token %}
+    <input type="hidden" name="voltar" value="{{ request.get_full_path }}">
+    <button class="btn btn-sm {% if c.concluido %}btn-success{% else %}btn-outline-secondary{% endif %}" title="{% if c.concluido %}Reabrir{% else %}Concluir{% endif %}"><i class="bi bi-check-lg"></i></button>
+  </form>
+  <div class="flex-grow-1 min-w-0">
+    <a href="{% url 'agenda:editar' c.pk %}?voltar={{ request.get_full_path|urlencode }}" class="text-decoration-none text-body">
+      <span class="badge tipo-{{ c.tipo }}">{{ c.get_tipo_display }}</span>
+      <strong class="{% if c.concluido %}text-decoration-line-through{% endif %}">{{ c.titulo }}</strong>
+    </a>
+    <div class="small text-muted">
+      {% if c.processo %}<a href="{{ c.processo.get_absolute_url }}">{{ c.processo }}</a>{% endif %}
+      {% if c.responsavel %} · {{ c.responsavel.get_full_name|default:c.responsavel.username }}{% endif %}
+      {% if c.local %} · {{ c.local }}{% endif %}
+    </div>
+  </div>
+  <div class="text-end small text-nowrap">
+    <div class="{% if c.situacao == 'atrasado' %}text-danger fw-semibold{% elif c.situacao == 'hoje' %}text-warning-emphasis fw-semibold{% endif %}">
+      {% if c.situacao == 'hoje' %}Hoje{% else %}{{ c.data|date:"d/m/Y" }}{% endif %}</div>
+    {% if c.hora %}<div class="text-muted">{{ c.hora|time:"H:i" }}</div>{% endif %}
+  </div>
+</li>

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block titulo %}Publicação{% endblock %}
+{% block conteudo %}
+<div class="d-flex flex-wrap justify-content-between align-items-start mb-3 gap-2">
+  <div>
+    <a href="{% url 'publicacoes:lista' %}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> Publicações</a>
+    <h1 class="h4 mb-0">{{ object.numero_processo|default:"Publicação sem número" }}</h1>
+    <span class="text-muted">{{ object.tipo }} · disponibilizada em {{ object.data_disponibilizacao|date:"d/m/Y" }} · {{ object.tribunal }}</span>
+  </div>
+  <div class="d-flex gap-2">
+    <form method="post" action="{% url 'publicacoes:marcar_lida' object.pk %}">{% csrf_token %}
+      {% if object.lida %}
+        <input type="hidden" name="lida" value="0"><button class="btn btn-outline-secondary btn-sm"><i class="bi bi-envelope me-1"></i>Marcar como não lida</button>
+      {% else %}
+        <input type="hidden" name="lida" value="1">
+        <button class="btn btn-success btn-sm"><i class="bi bi-check2 me-1"></i>Marcar como lida</button>
+        <button class="btn btn-outline-success btn-sm" name="proxima" value="1">Lida e próxima <i class="bi bi-arrow-right"></i></button>
+      {% endif %}
+    </form>
+    <a class="btn btn-outline-primary btn-sm" href="{% url 'publicacoes:editar' object.pk %}"><i class="bi bi-pencil"></i></a>
+    <a class="btn btn-outline-danger btn-sm" href="{% url 'publicacoes:excluir' object.pk %}"><i class="bi bi-trash"></i></a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card"><div class="card-body">
+      {% if object.orgao %}<div class="small text-muted mb-2"><i class="bi bi-building me-1"></i>{{ object.orgao }}</div>{% endif %}
+      <div class="texto-publicacao">{{ object.texto }}</div>
+      {% if object.destinatarios or object.advogados %}
+      <hr>
+      <div class="row small">
+        {% if object.destinatarios %}<div class="col-md-6"><strong>Partes</strong><div style="white-space: pre-wrap">{{ object.destinatarios }}</div></div>{% endif %}
+        {% if object.advogados %}<div class="col-md-6"><strong>Advogados</strong><div style="white-space: pre-wrap">{{ object.advogados }}</div></div>{% endif %}
+      </div>
+      {% endif %}
+      {% if object.link %}<a class="btn btn-sm btn-outline-secondary mt-3" href="{{ object.link }}" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-1"></i>Ver documento no tribunal</a>{% endif %}
+      {% if object.lida %}<div class="small text-muted mt-3">Lida por {{ object.lida_por.get_full_name|default:object.lida_por.username|default:"—" }} em {{ object.lida_em|date:"d/m/Y H:i" }}</div>{% endif %}
+    </div></div>
+  </div>
+
+  <div class="col-lg-4 d-flex flex-column gap-3">
+    <div class="card"><div class="card-body">
+      <h2 class="h6">Processo</h2>
+      {% if object.processo %}
+        <a href="{{ object.processo.get_absolute_url }}" class="fw-semibold">{{ object.processo }}</a>
+        <div class="small text-muted">{{ object.processo.cliente }}</div>
+      {% else %}
+        <p class="small text-muted">Nenhum processo cadastrado com este número.</p>
+        <a class="btn btn-sm btn-primary w-100 mb-2" href="{% url 'processos:criar' %}?numero={{ object.numero_processo|urlencode }}"><i class="bi bi-folder-plus me-1"></i>Cadastrar processo</a>
+        <form method="post" action="{% url 'publicacoes:vincular' object.pk %}" class="d-flex gap-2">{% csrf_token %}
+          <select name="processo" class="form-select form-select-sm" required>
+            <option value="">Vincular a um existente…</option>
+            {% for p in processos %}<option value="{{ p.pk }}">{{ p.numero }} — {{ p.cliente }}</option>{% endfor %}
+          </select>
+          <button class="btn btn-sm btn-outline-primary">OK</button>
+        </form>
+      {% endif %}
+    </div></div>
+
+    <div class="card"><div class="card-body">
+      <h2 class="h6"><i class="bi bi-alarm me-1"></i>Criar prazo</h2>
+      <form method="post" action="{% url 'publicacoes:criar_prazo' object.pk %}">{% csrf_token %}
+        <div class="mb-2"><label class="form-label small mb-0">Título</label>{{ prazo_form.titulo }}</div>
+        <div class="row g-2 mb-2">
+          <div class="col-5"><label class="form-label small mb-0">Dias</label>{{ prazo_form.dias }}</div>
+          <div class="col-7"><label class="form-label small mb-0">Contagem</label>{{ prazo_form.contagem }}</div>
+        </div>
+        <div class="mb-3"><label class="form-label small mb-0">Responsável</label>{{ prazo_form.responsavel }}</div>
+        <button class="btn btn-primary btn-sm w-100">Criar prazo e marcar como lida</button>
+      </form>
+      <table class="table table-sm small mt-3 mb-0">
+        <thead><tr><th colspan="2" class="text-muted fw-normal">Simulação em dias úteis</th></tr></thead>
+        {% for dias, venc in simulacao %}<tr><td>{{ dias }} dias</td><td class="text-end fw-semibold">{{ venc|date:"D, d/m/Y" }}</td></tr>{% endfor %}
+      </table>
+      <div class="form-text">Publicação = 1º dia útil após a disponibilização; o prazo começa no dia útil seguinte (Lei 11.419/06, art. 4º). Considera feriados nacionais, recesso de 20/12 a 20/01 e os feriados cadastrados na administração. Sempre confira o calendário do tribunal.</div>
+      {% if object.compromissos.exists %}
+      <hr><div class="small"><strong>Prazos já criados:</strong>
+        {% for c in object.compromissos.all %}<div><a href="{% url 'agenda:editar' c.pk %}">{{ c.titulo }}</a> — {{ c.data|date:"d/m/Y" }}</div>{% endfor %}</div>
+      {% endif %}
+    </div></div>
+  </div>
+</div>
+{% endblock %}
