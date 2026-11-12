@@ -1,0 +1,28 @@
+{% extends "core/form.html" %}
+{% block titulo %}Configurar robô{% endblock %}
+{% block conteudo %}
+<div class="mb-3">
+  <a href="{% url 'whatsapp:lista' %}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> Conversas</a>
+  <h1 class="h4 mb-0">Configurar robô do WhatsApp</h1>
+  <p class="text-muted small mb-0">O robô responde usando só o que estiver escrito aqui. Quanto mais completo, menos conversas ele precisa passar para a equipe.</p>
+</div>
+<div class="card"><div class="card-body">
+  <form method="post" novalidate>{% csrf_token %}
+    <div class="row g-3">
+      {% for campo in form %}
+      <div class="{% if campo.field.widget.input_type == 'checkbox' %}col-12{% elif campo.field.widget.attrs.rows %}col-12{% else %}col-md-6{% endif %}">
+        {% if campo.field.widget.input_type == 'checkbox' %}
+          <div class="form-check form-switch">{{ campo }} <label class="form-check-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label></div>
+        {% else %}
+          <label class="form-label" for="{{ campo.id_for_label }}">{{ campo.label|capfirst }}</label>
+          {{ campo }}
+        {% endif %}
+        {% if campo.help_text %}<div class="form-text">{{ campo.help_text }}</div>{% endif %}
+        {% for erro in campo.errors %}<div class="text-danger small">{{ erro }}</div>{% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+    <div class="mt-4"><button class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Salvar</button></div>
+  </form>
+</div></div>
+{% endblock %}

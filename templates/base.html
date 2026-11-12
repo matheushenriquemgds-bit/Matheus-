@@ -27,6 +27,8 @@
           {% if menu_nao_lidas %}<span class="badge text-bg-danger ms-auto">{{ menu_nao_lidas }}</span>{% endif %}</a></li>
         <li><a class="nav-link {% if '/agenda/' in p %}active{% endif %}" href="{% url 'agenda:lista' %}"><i class="bi bi-calendar-check"></i>Prazos e agenda
           {% if menu_atrasados %}<span class="badge text-bg-warning ms-auto" title="Vencem hoje ou atrasados">{{ menu_atrasados }}</span>{% endif %}</a></li>
+        <li><a class="nav-link {% if '/whatsapp/' in p %}active{% endif %}" href="{% url 'whatsapp:lista' %}"><i class="bi bi-whatsapp"></i>WhatsApp
+          {% if menu_whatsapp %}<span class="badge text-bg-success ms-auto" title="Conversas novas e solicitações pendentes">{{ menu_whatsapp }}</span>{% endif %}</a></li>
         <li><a class="nav-link {% if '/processos/' in p %}active{% endif %}" href="{% url 'processos:lista' %}"><i class="bi bi-folder2-open"></i>Processos</a></li>
         <li><a class="nav-link {% if '/clientes/' in p %}active{% endif %}" href="{% url 'clientes:lista' %}"><i class="bi bi-people"></i>Clientes</a></li>
         <li><a class="nav-link {% if '/financeiro/' in p %}active{% endif %}" href="{% url 'financeiro:lista' %}"><i class="bi bi-cash-coin"></i>Financeiro</a></li>

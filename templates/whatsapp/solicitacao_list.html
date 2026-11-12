@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titulo %}Solicitações do WhatsApp{% endblock %}
+{% block conteudo %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <div>
+    <a href="{% url 'whatsapp:lista' %}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> Conversas</a>
+    <h1 class="h4 mb-0">Solicitações do WhatsApp</h1>
+  </div>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link {% if status == 'pendentes' %}active{% endif %}" href="?status=pendentes&tipo={{ request.GET.tipo }}">Pendentes</a></li>
+  <li class="nav-item"><a class="nav-link {% if status == 'resolvidas' %}active{% endif %}" href="?status=resolvidas&tipo={{ request.GET.tipo }}">Resolvidas</a></li>
+  <li class="nav-item"><a class="nav-link {% if status == 'todas' %}active{% endif %}" href="?status=todas&tipo={{ request.GET.tipo }}">Todas</a></li>
+</ul>
+
+<form class="row g-2 mb-3">
+  <input type="hidden" name="status" value="{{ status }}">
+  <div class="col-md-4"><select name="tipo" class="form-select" onchange="this.form.submit()"><option value="">Todos os tipos</option>
+    {% for valor, nome in tipos %}<option value="{{ valor }}" {% if request.GET.tipo == valor %}selected{% endif %}>{{ nome }}</option>{% endfor %}</select></div>
+</form>
+
+<div class="card">
+  <ul class="list-group list-group-flush">
+  {% for s in object_list %}
+    <li class="list-group-item d-flex gap-3 align-items-start {% if s.resolvida %}bg-light{% endif %}">
+      <i class="bi {% if s.tipo == 'agendamento' %}bi-calendar-plus text-primary{% elif s.tipo == 'documentos' %}bi-file-earmark-text text-success{% else %}bi-person-raised-hand text-warning{% endif %} fs-4"></i>
+      <div class="flex-grow-1 min-w-0">
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+          <span><strong>{{ s.get_tipo_display }}</strong> · <a href="{{ s.conversa.get_absolute_url }}">{{ s.conversa.titulo }}</a></span>
+          <span class="small text-muted text-nowrap">{{ s.criado_em|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div>{{ s.resumo }}</div>
+        {% if s.detalhes %}<div class="small text-muted" style="white-space: pre-wrap">{{ s.detalhes }}</div>{% endif %}
+        {% if s.resolvida %}<div class="small text-success">Resolvida {% if s.resolvida_por %}por {{ s.resolvida_por.get_full_name|default:s.resolvida_por.username }}{% endif %} em {{ s.resolvida_em|date:"d/m/Y H:i" }}</div>{% endif %}
+      </div>
+      <form method="post" action="{% url 'whatsapp:resolver' s.pk %}">{% csrf_token %}
+        <input type="hidden" name="voltar" value="{{ request.get_full_path }}">
+        {% if s.resolvida %}<button class="btn btn-sm btn-outline-secondary">Reabrir</button>
+        {% else %}<button class="btn btn-sm btn-outline-success"><i class="bi bi-check2"></i> Resolvida</button>{% endif %}
+      </form>
+    </li>
+  {% empty %}
+    <li class="list-group-item text-center text-muted py-4">Nenhuma solicitação.</li>
+  {% endfor %}
+  </ul>
+</div>
+{% include "core/_paginacao.html" %}
+{% endblock %}

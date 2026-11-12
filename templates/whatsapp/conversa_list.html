@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block titulo %}WhatsApp{% endblock %}
+{% block conteudo %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h1 class="h4 mb-0"><i class="bi bi-whatsapp text-success me-1"></i>Atendimento por WhatsApp</h1>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary btn-sm" href="{% url 'whatsapp:solicitacoes' %}"><i class="bi bi-inbox me-1"></i>Solicitações
+      {% if pendentes %}<span class="badge text-bg-danger">{{ pendentes }}</span>{% endif %}</a>
+    <a class="btn btn-outline-secondary btn-sm" href="{% url 'whatsapp:configuracao' %}"><i class="bi bi-gear me-1"></i>Configurar robô</a>
+  </div>
+</div>
+
+{% if not whatsapp_configurado %}
+<div class="alert alert-warning small">
+  <i class="bi bi-exclamation-triangle me-1"></i>O WhatsApp ainda não está conectado. Defina as variáveis
+  <code>WHATSAPP_TOKEN</code>, <code>WHATSAPP_PHONE_NUMBER_ID</code>, <code>WHATSAPP_VERIFY_TOKEN</code>,
+  <code>WHATSAPP_APP_SECRET</code> e <code>ANTHROPIC_API_KEY</code> (veja o README).
+</div>
+{% endif %}
+{% if not config.bot_ativo %}
+<div class="alert alert-secondary small"><i class="bi bi-pause-circle me-1"></i>O robô está <strong>desligado</strong>: as mensagens chegam aqui, mas ninguém responde automaticamente.
+  <a href="{% url 'whatsapp:configuracao' %}">Ligar</a></div>
+{% endif %}
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link {% if not filtro %}active{% endif %}" href="?">Todas</a></li>
+  <li class="nav-item"><a class="nav-link {% if filtro == 'nao_lidas' %}active{% endif %}" href="?filtro=nao_lidas">Não lidas</a></li>
+  <li class="nav-item"><a class="nav-link {% if filtro == 'equipe' %}active{% endif %}" href="?filtro=equipe">Com a equipe</a></li>
+</ul>
+
+<form class="row g-2 mb-3">
+  <input type="hidden" name="filtro" value="{{ filtro }}">
+  <div class="col-md-6"><input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="Buscar por nome, número ou cliente…"></div>
+  <div class="col-md-2"><button class="btn btn-outline-secondary w-100"><i class="bi bi-search"></i> Buscar</button></div>
+</form>
+
+<div class="card">
+  <ul class="list-group list-group-flush">
+  {% for c in object_list %}
+    <a href="{{ c.get_absolute_url }}" class="list-group-item list-group-item-action d-flex gap-3 align-items-center">
+      <i class="bi bi-person-circle fs-3 text-secondary"></i>
+      <div class="flex-grow-1 min-w-0">
+        <div class="d-flex flex-wrap justify-content-between gap-2">
+          <span><strong class="{% if c.nao_lida %}text-primary{% endif %}">{{ c.titulo }}</strong>
+            <span class="small text-muted">{{ c.telefone_formatado }}</span>
+            {% if c.cliente %}<span class="badge text-bg-light border">cliente</span>{% endif %}
+            {% if c.bot_pausado %}<span class="badge text-bg-warning">com a equipe</span>{% endif %}
+            {% if c.nao_lida %}<span class="badge text-bg-primary">nova</span>{% endif %}</span>
+          <span class="small text-muted text-nowrap">{{ c.ultima_mensagem_em|date:"d/m/Y H:i" }}</span>
+        </div>
+      </div>
+    </a>
+  {% empty %}
+    <li class="list-group-item text-center text-muted py-4">Nenhuma conversa ainda. Quando alguém mandar mensagem para o número do escritório, ela aparece aqui.</li>
+  {% endfor %}
+  </ul>
+</div>
+{% include "core/_paginacao.html" %}
+{% endblock %}

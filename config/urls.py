@@ -12,6 +12,7 @@ urlpatterns = [
     path("publicacoes/", include("publicacoes.urls")),
     path("agenda/", include("agenda.urls")),
     path("financeiro/", include("financeiro.urls")),
+    path("whatsapp/", include("whatsapp.urls")),
 ]
 
 admin.site.site_header = "Escritório — Administração"

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block titulo %}{{ object.titulo }} · WhatsApp{% endblock %}
+{% block conteudo %}
+<div class="d-flex flex-wrap justify-content-between align-items-start mb-3 gap-2">
+  <div>
+    <a href="{% url 'whatsapp:lista' %}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> Conversas</a>
+    <h1 class="h4 mb-0">{{ object.titulo }}</h1>
+    <span class="text-muted small">{{ object.telefone_formatado }}{% if object.nome and object.cliente %} · no WhatsApp: {{ object.nome }}{% endif %}</span>
+  </div>
+  <form method="post" action="{% url 'whatsapp:alternar_robo' object.pk %}">{% csrf_token %}
+    {% if object.bot_pausado %}
+      <button class="btn btn-sm btn-success"><i class="bi bi-robot me-1"></i>Devolver ao robô</button>
+    {% else %}
+      <button class="btn btn-sm btn-outline-warning"><i class="bi bi-person-raised-hand me-1"></i>Assumir conversa</button>
+    {% endif %}
+  </form>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header bg-white small">
+        {% if object.bot_pausado %}<i class="bi bi-person-fill text-warning me-1"></i>A equipe está atendendo: o robô não responde esta conversa.
+        {% elif not config.bot_ativo %}<i class="bi bi-pause-circle me-1"></i>O robô está desligado para todas as conversas.
+        {% else %}<i class="bi bi-robot text-success me-1"></i>O robô está respondendo esta conversa.{% endif %}
+      </div>
+      <div class="card-body chat">
+        {% for m in mensagens %}
+        <div class="balao {% if m.direcao == 'entrada' %}balao-entrada{% else %}balao-saida autor-{{ m.autor }}{% endif %}">
+          <div class="small text-muted mb-1">
+            {% if m.autor == 'robo' %}<i class="bi bi-robot"></i> Robô{% elif m.autor == 'equipe' %}<i class="bi bi-person"></i> {{ m.usuario.get_full_name|default:m.usuario.username|default:"Equipe" }}{% else %}{{ object.titulo }}{% endif %}
+            · {{ m.criada_em|date:"d/m H:i" }}
+          </div>
+          {% if m.arquivo %}
+            <div class="mb-1"><a href="{% url 'whatsapp:arquivo' m.pk %}" target="_blank"><i class="bi bi-paperclip"></i> {{ m.descricao_arquivo }}</a>
+              · <a class="small" href="{% url 'whatsapp:arquivo' m.pk %}?baixar=1">baixar</a></div>
+          {% elif m.tipo != 'text' and not m.texto %}
+            <div class="text-muted fst-italic">[{{ m.tipo }}]</div>
+          {% endif %}
+          {% if m.texto %}<div class="texto">{{ m.texto }}</div>{% endif %}
+          {% if m.erro %}<div class="small text-danger mt-1"><i class="bi bi-exclamation-circle"></i> {{ m.erro }}</div>{% endif %}
+        </div>
+        {% empty %}
+        <p class="text-muted text-center my-4">Sem mensagens.</p>
+        {% endfor %}
+      </div>
+      <div class="card-footer bg-white">
+        <form method="post" action="{% url 'whatsapp:responder' object.pk %}">{% csrf_token %}
+          {{ resposta_form.texto }}
+          <div class="d-flex justify-content-between align-items-center mt-2 gap-2">
+            <span class="small text-muted">
+              {% if object.janela_aberta %}Ao responder, o robô é pausado nesta conversa.
+              {% else %}<i class="bi bi-clock-history"></i> Mais de 24 h sem mensagem do contato: o WhatsApp só deixa responder quando ele escrever de novo.{% endif %}
+            </span>
+            <button class="btn btn-primary btn-sm"><i class="bi bi-send me-1"></i>Enviar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 d-flex flex-column gap-3">
+    <div class="card"><div class="card-body">
+      <h2 class="h6 text-muted text-uppercase small">Solicitações pendentes</h2>
+      {% for s in solicitacoes %}
+        <div class="border rounded p-2 mb-2 small">
+          <div class="d-flex justify-content-between gap-2">
+            <strong>{{ s.get_tipo_display }}</strong><span class="text-muted">{{ s.criado_em|date:"d/m H:i" }}</span>
+          </div>
+          <div>{{ s.resumo }}</div>
+          {% if s.detalhes %}<div class="text-muted" style="white-space: pre-wrap">{{ s.detalhes }}</div>{% endif %}
+          <form method="post" action="{% url 'whatsapp:resolver' s.pk %}" class="mt-1">{% csrf_token %}
+            <input type="hidden" name="voltar" value="{{ request.get_full_path }}">
+            <button class="btn btn-sm btn-outline-success py-0"><i class="bi bi-check2"></i> Resolvida</button>
+          </form>
+        </div>
+      {% empty %}
+        <p class="small text-muted mb-0">Nenhuma.</p>
+      {% endfor %}
+    </div></div>
+
+    <div class="card"><div class="card-body">
+      <h2 class="h6 text-muted text-uppercase small">Cliente</h2>
+      {% if object.cliente %}<p class="small mb-2"><a href="{{ object.cliente.get_absolute_url }}">{{ object.cliente }}</a></p>{% endif %}
+      <form method="post" action="{% url 'whatsapp:vincular' object.pk %}" class="d-flex gap-2">{% csrf_token %}
+        {{ vincular_form.cliente }}
+        <button class="btn btn-sm btn-outline-primary">Salvar</button>
+      </form>
+      <div class="form-text">O vínculo é automático quando o celular do cliente está no cadastro.</div>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const chat = document.querySelector(".chat");
+  if (chat) chat.scrollTop = chat.scrollHeight;
+</script>
+{% endblock %}

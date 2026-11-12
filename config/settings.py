@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "publicacoes",
     "agenda",
     "financeiro",
+    "whatsapp",
 ]
 
 MIDDLEWARE = [
@@ -103,6 +104,10 @@ STORAGES = {
     },
 }
 
+# Arquivos recebidos pelo WhatsApp. Não são servidos publicamente: só usuários logados baixam.
+MEDIA_ROOT = Path(os.environ.get("MEDIA_ROOT", BASE_DIR / "media"))
+MEDIA_URL = "/arquivos/"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 LOGIN_URL = "login"
@@ -118,3 +123,24 @@ if not DEBUG:
 COMUNICA_API_URL = os.environ.get("COMUNICA_API_URL", "https://comunicaapi.pje.jus.br/api/v1/comunicacao")
 # Quantos dias para trás buscar quando uma OAB nunca foi consultada
 PUBLICACOES_DIAS_INICIAIS = int(os.environ.get("PUBLICACOES_DIAS_INICIAIS", "7"))
+
+# WhatsApp Cloud API (Meta) — veja o README
+WHATSAPP_TOKEN = os.environ.get("WHATSAPP_TOKEN", "")
+WHATSAPP_PHONE_NUMBER_ID = os.environ.get("WHATSAPP_PHONE_NUMBER_ID", "")
+WHATSAPP_VERIFY_TOKEN = os.environ.get("WHATSAPP_VERIFY_TOKEN", "")
+WHATSAPP_APP_SECRET = os.environ.get("WHATSAPP_APP_SECRET", "")
+WHATSAPP_API_VERSION = os.environ.get("WHATSAPP_API_VERSION", "v24.0")
+# Responde em segundo plano para confirmar o aviso da Meta na hora (os testes desligam isto).
+WHATSAPP_RESPONDER_EM_SEGUNDO_PLANO = env_bool("WHATSAPP_RESPONDER_EM_SEGUNDO_PLANO", True)
+
+# Robô de atendimento (Claude, da Anthropic)
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+BOT_MODELO = os.environ.get("BOT_MODELO", "claude-opus-5-5")
+BOT_ESFORCO = os.environ.get("BOT_ESFORCO", "medium")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "loggers": {"whatsapp": {"handlers": ["console"], "level": "INFO"}},
+}
